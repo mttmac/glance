@@ -27,13 +27,13 @@ from pdb import set_trace
 
 # CONSTANTS
 
-PATH = Path('~/github/glance/data/raw/')
-
+PATH = Path.cwd() / 'data/raw/'
+# Functions assume the current working directory is PATH
 
 # Functions
 
 def save_scratch(obj, name):
-    path = PATH.parent / 'scratch'
+    path = Path('../scratch/')
     if not path.is_dir():
         os.mkdir(path)
 
@@ -42,9 +42,9 @@ def save_scratch(obj, name):
 
 
 def read_raw(subset=0, need_faults=False):
-    with open(PATH / 'description.txt', 'r',
-              encoding='utf-8', errors='ignore') as file:
+    with open('description.txt', 'r', encoding='utf-8', errors='ignore') as file:
         lines = file.readlines()
+
     sensors = ''.join(lines[25:40])
     fault_desc = ''.join(lines[46:71])
     fault_lines = [line for line in fault_desc.split('\n') if len(line)]
