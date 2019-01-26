@@ -104,5 +104,13 @@ venv.bak/
 .mypy_cache/
 
 # Folders
+/models/
+/playground/
 /data/scratch/
-/data/NV_outlier
+/data/NV_outlier/
+/data/cracks/
+
+
+
+
+
