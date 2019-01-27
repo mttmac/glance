@@ -146,7 +146,7 @@ def save_test_train_val(data, faults, failures, key, size=512):
     test_idx_fail = faults[mask].index.values
     train_idx = faults[~mask].index.values
     test_idx_norm = np.random.choice(train_idx,
-                                     len(test_idx),
+                                     len(test_idx_fail),
                                      replace=False)
     train_idx = train_idx[~np.in1d(train_idx, test_idx_norm)]
     val_idx = np.random.choice(train_idx,
@@ -173,9 +173,9 @@ def save_test_train_val(data, faults, failures, key, size=512):
     print('Starting split and save..')
     
     # Resample the time-series to size and save array to folders
-    for num, idx in enumerate(indices):
+    for num, idx in enumerate(tqdm(indices)):
         folder = folders[num]
-        for cycle in tqdm(idx):
+        for cycle in idx:
             # Select only data for specific cycle
             df = data[data.cycle == cycle]
             df = df.set_index('sensor').sort_index()
