@@ -106,9 +106,8 @@ venv.bak/
 # Folders
 /models/
 /playground/
-/data/scratch/
-/data/NV_outlier/
-/data/cracks/
+/data/
+
 
 
 

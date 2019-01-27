@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Define functions to generate training data for CNN from raw sensor data.
-
+Define functions to generate training data from raw sensor data.
 Written by Matt MacDonald 2019
 '''
 
@@ -25,23 +24,20 @@ import dill as pickle
 from pdb import set_trace
 
 
-# CONSTANTS
+PATH = Path.cwd() / 'data/hydraulic/raw/'
+# Warning: functions assume the current working directory is PATH, cd into it first
 
-PATH = Path.cwd() / 'data/raw/'
-# Functions assume the current working directory is PATH
-
-# Functions
 
 def save_scratch(obj, name):
-    path = Path('../scratch/')
+    path = Path('scratch/')
     if not path.is_dir():
         os.mkdir(path)
 
-    with open(path / (name + '.p'), 'wb') as file:
+    with open(path / (name + '.pkl'), 'wb') as file:
         pickle.dump(obj, file)
 
 
-def read_raw(subset=0, need_faults=False):
+def read_raw(subset=None, need_faults=False):
     with open('description.txt', 'r', encoding='utf-8', errors='ignore') as file:
         lines = file.readlines()
 
@@ -64,7 +60,7 @@ def read_raw(subset=0, need_faults=False):
         df = pd.read_csv(f'{sensor}.txt',
                          delim_whitespace=True,
                          header=None)
-        if subset:
+        if subset is not None:
             cycles = np.random.choice(df.index, subset)
         else:
             cycles = df.index
