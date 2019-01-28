@@ -192,22 +192,33 @@ class TransientDataset(Dataset):
     
     def __init__(self, data_path):
         self.path = Path(data_path)
-        self.sensors = os.listdir(self.path)
+        self.classes = sorted(os.listdir(self.path))
+        self.names = []
+        self.targets =[]
+        for i, c in enumerate(self.classes):
+            names = os.listdir(self.path / c)
+            targets = [i] * len(names)
+            self.names.append(names)
+            self.targets.append(targets)
         
     def __len__(self):
         return len(self.names)
     
     def __getitem__(self, index):
-        if type(index) is str:
-            if index[-4:] != '.jpg':
-                index = index + '.jpg'
-            index = self.names.index(index)
         name = self.names[index]
-        namepath = f"{self.path}{name}"
-        return (Image.open(namepath), name) if os.path.isfile(namepath) else None
+        target = self.targets[index]
+        path = self.path / self.classes[target] / name
+        return (torch.Tensor(np.load(path)), target)
+    
+    def index(name):
+        name = str(name)
+        if index[-4:] != '.npy':
+            index = index + '.npy'
+        return self.names.index(index)
+        
 
 
-def load_datasets(data_path, size, batch_size=32):
+def load_datasets(data_path, batch_size=32):
     """
     Load the image datasets from train and test
     Transform to correct size
