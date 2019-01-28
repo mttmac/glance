@@ -190,8 +190,12 @@ class VAE1DLoss(nn.Module):
 
 class TransientDataset(Dataset):
     
-    def __init__(self, data_path):
+    def __init__(self, data_path, normals):
         self.path = Path(data_path)
+        # Normals is an array of mean and std for each sensor
+        self.mu = normals[:, 0][:, None]  # want arrays, not vectors
+        self.sigma = normals[:, 1][:, None]
+        
         self.classes = sorted(os.listdir(self.path))
         self.names = []
         self.targets =[]
@@ -208,56 +212,45 @@ class TransientDataset(Dataset):
         name = self.names[index]
         target = self.targets[index]
         path = self.path / self.classes[target] / name
-        return (torch.Tensor(np.load(path)), target)
+        return (torch.Tensor(self.norm(np.load(path))), target)
     
-    def index(name):
+    def index(self, name):
         name = str(name)
         if index[-4:] != '.npy':
             index = index + '.npy'
         return self.names.index(index)
-        
+    
+    def norm(self, arr):
+        # Normalize sensor channels to N(0, 1)
+        return (arr - self.mu) / self.sigma
 
 
 def load_datasets(data_path, batch_size=32):
     """
-    Load the image datasets from train and test
-    Transform to correct size
+    Load the transient datasets from train and test into dataloaders
+    Must have normals for each sensor channel saved to normals.npy
     """
     data_path = Path(data_path)
     train_path = data_path / 'train/train/'
     val_path = data_path / 'train/val/'
     test_path = data_path / 'test/'
     
-    norm_args = {'mean': [0.5] * n_channels,  # TODO: still work with N(0, 1) distribution?
-                 'std': [0.5] * n_channels}
-    jitter_args = {'brightness': 0.1,
-                   'contrast': 0.1,
-                   'saturation': 0.1}  # hue unchanged
-    
-    train_transform = transforms.Compose([
-        transforms.Resize(img_size),
-        transforms.RandomCrop(img_size),          # vary horizontal position
-        transforms.RandomHorizontalFlip(p=0.25),  # vary photo orientation
-        transforms.RandomVerticalFlip(p=0.25),
-        transforms.ColorJitter(**jitter_args),    # vary photo lighting
-        transforms.ToTensor(),
-        transforms.Normalize(**norm_args)])
-    
-    test_transform = transforms.Compose([
-        transforms.Resize(img_size),
-        transforms.CenterCrop(img_size),  # assume center is most important
-        transforms.ToTensor(),
-        transforms.Normalize(**norm_args)])
+    normals = np.load('normals.npy')
 
-    train_ds = datasets.ImageFolder(train_path, train_transform)
-    val_ds = datasets.ImageFolder(val_path, test_transform)
-    test_ds = datasets.ImageFolder(test_path, test_transform)
-    
+    train_ds = datasets.TransientDataset(train_path, normals)
+    val_ds = datasets.TransientDataset(val_path, normals)
+    test_ds = datasets.TransientDataset(test_path, normals)
     
     loader_args = {'shuffle': True,
                    'num_workers': 4}
-    train_dl = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, **loader_args)
-    val_dl = torch.utils.data.DataLoader(val_ds, batch_size=batch_size, **loader_args)
-    test_dl = torch.utils.data.DataLoader(test_ds, batch_size=1, ** loader_args)
+    train_dl = torch.utils.data.DataLoader(train_ds,
+                                           batch_size=batch_size,
+                                           **loader_args)
+    val_dl = torch.utils.data.DataLoader(val_ds,
+                                         batch_size=batch_size,
+                                         **loader_args)
+    test_dl = torch.utils.data.DataLoader(test_ds,
+                                          batch_size=1,
+                                          ** loader_args)
     
     return train_dl, val_dl, test_dl

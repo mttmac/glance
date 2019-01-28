@@ -210,3 +210,19 @@ def save_test_train_val(data, faults, failures, key, size=512):
             np.save(path, arr, False, False)
     
     print('Success!')
+
+    
+def save_normals(data):
+    # Save mean and std array for sensor channels
+    mean = []
+    std = []
+    sensors = data.sensor.unique()
+    for s in sensors:
+        vecs = np.stack(data[data.sensor == s].data)
+        mu = vecs.mean(axis=1)
+        sigma = vecs.std(axis=1)
+        mean.append(mu.mean())
+        std.append(sigma.mean())
+    norms = np.array([mean, std]).T
+    np.save('normals.npy', norms, False, False)
+    
