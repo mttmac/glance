@@ -118,16 +118,19 @@ class VAE2D(nn.Module):
         output = output.squeeze(-1).squeeze(-1)
         return [self.conv_mu(output), self.conv_logvar(output)]
 
-    def generate(self, mu, logvar):
+    def sample(self, mu, logvar):
         """
         Generates a random latent vector using the trained mean and log variance representation
         input:  mu     [batch_size, n_latent, 1, 1]
                 logvar [batch_size, n_latent, 1, 1]
         output: gen    [batch_size, n_latent, 1, 1]
         """
-        std = torch.exp(0.5 * logvar)
-        gen = torch.randn_like(std)
-        return gen.mul(std).add_(mu)
+        if self.training:
+            std = torch.exp(0.5 * logvar)
+            gen = torch.randn_like(std)
+            return gen.mul(std).add_(mu)
+        else:
+            return mu  # most likely representation
 
     def decode(self, gen):
         """
@@ -146,7 +149,7 @@ class VAE2D(nn.Module):
                logvar   [batch_size, n_latent]
         """
         mu, logvar = self.encode(imgs)
-        gen = self.generate(mu, logvar)
+        gen = self.sample(mu, logvar)
         for tensor in (mu, logvar):
             tensor = tensor.squeeze(-1).squeeze(-1)
         return self.decode(gen), mu, logvar

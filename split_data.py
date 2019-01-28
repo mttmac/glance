@@ -216,13 +216,31 @@ def save_normals(data):
     # Save mean and std array for sensor channels
     mean = []
     std = []
-    sensors = data.sensor.unique()
+    sensors = sorted(data.sensor.unique())
     for s in sensors:
         vecs = np.stack(data[data.sensor == s].data)
         mu = vecs.mean(axis=1)
         sigma = vecs.std(axis=1)
         mean.append(mu.mean())
-        std.append(sigma.mean())
+        std.append(sigma.max())
     norms = np.array([mean, std]).T
     np.save('normals.npy', norms, False, False)
     
+
+def save_normals_sigmoid(data):
+    # Save mean and std array that gaurantee data between 0 and 1
+    mean = []
+    std = []
+    sensors = sorted(data.sensor.unique())
+    for s in sensors:
+        vecs = np.stack(data[data.sensor == s].data)
+        mx = vecs.max(axis=1)
+        mn = vecs.min(axis=1)
+        mx = mx.max()
+        mn = mn.min()
+        mu = (mx + mn) / 2
+        sigma = np.abs(mx - mn)
+        mean.append(mu - 0.5 * sigma)
+        std.append(sigma)
+    norms = np.array([mean, std]).T
+    np.save('normals.npy', norms, False, False)

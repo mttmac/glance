@@ -1,8 +1,8 @@
-from VAE1D import *
+from VAE2D import *
 import matplotlib.pyplot as plt
 
 def load_checkpoint(model, device):
-    checkpoint = torch.load('models/190128-hydraulic/best_model.pth.tar', map_location=device)
+    checkpoint = torch.load('models/190124-skin/best_model.pth.tar', map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     print("Checkpoint Performance:")
@@ -12,17 +12,17 @@ def load_checkpoint(model, device):
     return model
 
 
-def get_random_samples(dl, n=20):
+def get_random_images(dl, n=20):
     for i, (X, y) in enumerate(dl):
         if i == 0:
-            data = X
+            imgs = X
             targets = y
         elif i < n:
-            data = torch.cat([data, X], 0)
+            imgs = torch.cat([imgs, X], 0)
             targets = torch.cat([targets, y], 0)
         else:
             break
-    return data, targets
+    return imgs, targets
 
 
 def list_target_classes(dl):
@@ -31,11 +31,11 @@ def list_target_classes(dl):
         print(f"{i} = {clss}")
     
     
-def show_plot(data):
-    assert data.shape == (14, 512), "Size error in plotting"
-    for i in range(data.shape[0]):
-        plt.plot(data[i, :])
-    # TODO: make into a grid of plots
+def show_images(imgs):
+    # Scale images back to 0-1
+    imgs = (imgs + 1) / 2
+    grid = make_grid(imgs, nrow=5, padding=20).cpu()
+    plt.imshow(grid.permute(1, 2, 0))
 
 
 # Unchanged

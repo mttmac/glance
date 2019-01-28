@@ -25,7 +25,7 @@ from itertools import product
 import scipy.stats as stats
 
 
-depth = 64      # initial depth to convolve channels into
+depth = 16      # initial depth to convolve channels into
 filt_size = 4   # convolution filter size
 stride = 2      # stride for conv
 pad = 1         # padding added for conv
@@ -99,10 +99,11 @@ class VAE1D(nn.Module):
             self.decoder.add_module(f'pyramid_{o_depth}_relu', nn.ReLU(inplace=True))
         
         # Final transposed convolution to return to vector size
-        # No final activation to allow unbounded numerical output
+        # TODO: ?No final activation to allow unbounded numerical output
         self.decoder.add_module('output-conv', nn.ConvTranspose1d(depth, n_channels,
                                                                   filt_size, stride, pad,
                                                                   bias=True))
+        self.decoder.add_module('output-sigmoid', nn.Sigmoid())
 
         # Model weights init
         ####################
@@ -129,16 +130,19 @@ class VAE1D(nn.Module):
         output = output.squeeze(-1).squeeze(-1)
         return [self.conv_mu(output), self.conv_logvar(output)]
 
-    def generate(self, mu, logvar):
+    def sample(self, mu, logvar):
         """
         Generate random latent space vector sampled from the trained normal distributions
         input:  mu     [batch_size, n_latent, 1, 1]
                 logvar [batch_size, n_latent, 1, 1]
         output: gen    [batch_size, n_latent, 1, 1]
         """
-        std = torch.exp(0.5 * logvar)
-        gen = torch.randn_like(std)
-        return gen.mul(std).add_(mu)
+        if self.training:
+            std = torch.exp(0.5 * logvar)
+            gen = torch.randn_like(std)
+            return gen.mul(std).add_(mu)
+        else:
+            return mu  # most likely representation
 
     def decode(self, gen):
         """
@@ -157,7 +161,7 @@ class VAE1D(nn.Module):
                logvar    [batch_size, n_latent]
         """
         mu, logvar = self.encode(trans)
-        gen = self.generate(mu, logvar)
+        gen = self.sample(mu, logvar)
         for vecs in (mu, logvar):
             vecs = vecs.squeeze(-1).squeeze(-1)
         return self.decode(gen), mu, logvar
@@ -180,11 +184,16 @@ class VAE1DLoss(nn.Module):
         """
         # Reconstruction loss
         batch_size = trans.shape[0]
-        gen_err = (trans - gen_trans).pow(2).reshape(batch_size, -1)
-        gen_err = 0.5 * torch.sum(gen_err, dim=-1)
-        if reduce:
-            gen_err = torch.mean(gen_err)
-
+        # gen_err = (trans - gen_trans).pow(2).reshape(batch_size, -1)
+        # gen_err = 0.5 * torch.sum(gen_err, dim=-1)
+        # if reduce:
+        #     gen_err = torch.mean(gen_err)
+        
+        # TODO try bce loss
+        reduction = 'mean' if reduce else 'none'
+        gen_err = nn.functional.binary_cross_entropy(gen_trans, trans,
+                                                     reduction=reduction)
+        
         # Regularizer
         # KL(q || p) = -log_sigma + sigma^2/2 + mu^2/2 - 1/2
         # K-L divergence of learned pdf to standard gaussian N(0, 1)
