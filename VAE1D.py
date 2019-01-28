@@ -202,8 +202,8 @@ class TransientDataset(Dataset):
         for i, c in enumerate(self.classes):
             names = os.listdir(self.path / c)
             targets = [i] * len(names)
-            self.names.append(names)
-            self.targets.append(targets)
+            self.names.extend(names)
+            self.targets.extend(targets)
         
     def __len__(self):
         return len(self.names)
@@ -214,6 +214,12 @@ class TransientDataset(Dataset):
         path = self.path / self.classes[target] / name
         return (torch.Tensor(self.norm(np.load(path))), target)
     
+    def __repr__(self):
+        ret = []
+        for i, c in enumerate(self.classes):
+            ret.append(f"{c}: {sum([1 if t == i else 0 for t in self.targets])}")
+        return ', '.join(ret)
+        
     def index(self, name):
         name = str(name)
         if index[-4:] != '.npy':
@@ -235,22 +241,16 @@ def load_datasets(data_path, batch_size=32):
     val_path = data_path / 'train/val/'
     test_path = data_path / 'test/'
     
-    normals = np.load('normals.npy')
+    normals = np.load(data_path / 'normals.npy')
 
-    train_ds = datasets.TransientDataset(train_path, normals)
-    val_ds = datasets.TransientDataset(val_path, normals)
-    test_ds = datasets.TransientDataset(test_path, normals)
+    train_ds = TransientDataset(train_path, normals)
+    val_ds = TransientDataset(val_path, normals)
+    test_ds = TransientDataset(test_path, normals)
     
     loader_args = {'shuffle': True,
                    'num_workers': 4}
-    train_dl = torch.utils.data.DataLoader(train_ds,
-                                           batch_size=batch_size,
-                                           **loader_args)
-    val_dl = torch.utils.data.DataLoader(val_ds,
-                                         batch_size=batch_size,
-                                         **loader_args)
-    test_dl = torch.utils.data.DataLoader(test_ds,
-                                          batch_size=1,
-                                          ** loader_args)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, **loader_args)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, **loader_args)
+    test_dl = DataLoader(test_ds, batch_size=1, ** loader_args)
     
     return train_dl, val_dl, test_dl
