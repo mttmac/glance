@@ -1,2 +1,2 @@
 # glance
-Visual anomaly detection on non-visual data.
+VAE anomaly detection on time-series data.
