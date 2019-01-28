@@ -37,8 +37,11 @@ class VAE1D(nn.Module):
         # Model setup
         #############
         super(VAE1D, self).__init__()
+        self.size = size
+        self.n_channels = n_channels
         self.n_latent = n_latent
-        n = math.log2(size)
+        
+        n = math.log2(self.size)
         assert n == round(n), 'Vector size must be a power of 2'  # restrict input sizes permitted
         assert n >= 3, 'Vector size must be at least 8'           # low dimensional data won't work well
         n = int(n)
@@ -166,7 +169,26 @@ class VAE1D(nn.Module):
             vecs = vecs.squeeze(-1).squeeze(-1)
         return self.decode(gen), mu, logvar
 
+    def demo(self, batch_size=1):
+        X = torch.rand(batch_size,
+                       self.n_channels,
+                       self.size,
+                       device=self.device)
+        print(f'Input size: {X.shape}')
+        E = self.encoder(X)
+        print(f'Encoded size: {E.shape}')
+        L = self.sample(*self.encode(X))
+        print(f'Latent size: {L.shape}')
+        D = self.decoder(L)
+        print(f'Decoded (output) size: {D.shape}')
+        return X, E, L, D
+    
+    def to(self, device):
+        # Override to save device property
+        self.device = device
+        return super().to(device)
 
+    
 class VAE1DLoss(nn.Module):
 
     def __init__(self, beta=1):
@@ -184,15 +206,15 @@ class VAE1DLoss(nn.Module):
         """
         # Reconstruction loss
         batch_size = trans.shape[0]
-        # gen_err = (trans - gen_trans).pow(2).reshape(batch_size, -1)
-        # gen_err = 0.5 * torch.sum(gen_err, dim=-1)
-        # if reduce:
-        #     gen_err = torch.mean(gen_err)
+        gen_err = (trans - gen_trans).pow(2).reshape(batch_size, -1)
+        gen_err = 0.5 * torch.sum(gen_err, dim=-1)
+        if reduce:
+            gen_err = torch.mean(gen_err)
         
         # TODO try bce loss
-        reduction = 'mean' if reduce else 'none'
-        gen_err = nn.functional.binary_cross_entropy(gen_trans, trans,
-                                                     reduction=reduction)
+        # reduction = 'mean' if reduce else 'none'
+        # gen_err = nn.functional.binary_cross_entropy(gen_trans, trans,
+        #                                              reduction=reduction)
         
         # Regularizer
         # KL(q || p) = -log_sigma + sigma^2/2 + mu^2/2 - 1/2
