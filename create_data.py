@@ -7,7 +7,6 @@ Written by Matt MacDonald 2019
 
 
 # IMPORTS
-
 import pandas as pd
 import numpy as np
 import scipy.signal as signal

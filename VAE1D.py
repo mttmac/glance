@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+
+'''
+Define variational autoencoder for 1D input data (time-series) including loss, training
+and data loading functions to work with intended dataset.
+Written by Matt MacDonald 2019
+'''
+
+
+# IMPORTS
 import os, math, time
 from pathlib import Path
 from datetime import date
@@ -89,11 +99,10 @@ class VAE1D(nn.Module):
             self.decoder.add_module(f'pyramid_{o_depth}_relu', nn.ReLU(inplace=True))
         
         # Final transposed convolution to return to vector size
-        # Final activation is tanh instead of relu to allow negative output
+        # No final activation to allow unbounded numerical output
         self.decoder.add_module('output-conv', nn.ConvTranspose1d(depth, n_channels,
                                                                   filt_size, stride, pad,
                                                                   bias=True))
-        self.decoder.add_module('output-tanh', nn.Tanh())
 
         # Model weights init
         ####################
@@ -139,7 +148,7 @@ class VAE1D(nn.Module):
         """
         return self.decoder(gen)
 
-    def forward(self, imgs):
+    def forward(self, trans):
         """
         Generates reconstituted images from input images based on learned representation
         input: trans     [batch_size, n_channels, size, size]
@@ -254,3 +263,34 @@ def load_datasets(data_path, batch_size=32):
     test_dl = DataLoader(test_ds, batch_size=1, ** loader_args)
     
     return train_dl, val_dl, test_dl
+
+
+# Convenience classes
+class StopWatch(object):
+    def __init__(self):
+        self.reset()
+        
+    def reset(self):
+        self.start = time.time()
+        self.lap_start = time.time()
+        self.elapsed = []
+    
+    def lap(self):
+        self.elapsed.append(time.time() - self.lap_start)
+
+
+class AvgTracker(object):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.sum = 0
+        self.avg = 0
+        self.cnt = 0
+
+    def update(self, val):
+        self.val = val
+        self.sum += val
+        self.cnt += 1
+        self.avg = self.sum / self.cnt
