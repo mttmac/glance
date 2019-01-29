@@ -5,8 +5,10 @@ size = 512
 n_channels = 14
 n_latent = 50
 
+date = '190129'
+
 def load_checkpoint(model, device):
-    checkpoint = torch.load(f'models/190128-hydraulic/best_model-{n_latent}.pt', map_location=device)
+    checkpoint = torch.load(f'models/{date}-hydraulic/best_model-{n_latent}.pt', map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     print("Checkpoint Performance:")
