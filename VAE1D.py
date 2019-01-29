@@ -106,7 +106,7 @@ class VAE1D(nn.Module):
         self.decoder.add_module('output-conv', nn.ConvTranspose1d(depth, n_channels,
                                                                   filt_size, stride, pad,
                                                                   bias=True))
-        self.decoder.add_module('output-sigmoid', nn.Sigmoid())
+        # self.decoder.add_module('output-sigmoid', nn.Sigmoid())
 
         # Model weights init
         ####################
@@ -125,20 +125,20 @@ class VAE1D(nn.Module):
     def encode(self, trans):
         """
         Encode time-series vectors (transients) into latent space mean and log variance vectors
-        input:  trans  [batch_size, n_channels, size, size]
-        output: mu     [batch_size, n_latent, 1, 1]
-                logvar [batch_size, n_latent, 1, 1]
+        input:  trans  [batch_size, n_channels, size]
+        output: mu     [batch_size, n_latent, 1]
+                logvar [batch_size, n_latent, 1]
         """
         output = self.encoder(trans)
-        output = output.squeeze(-1).squeeze(-1)
+        output = output.squeeze(-1)
         return [self.conv_mu(output), self.conv_logvar(output)]
 
     def sample(self, mu, logvar):
         """
         Generate random latent space vector sampled from the trained normal distributions
-        input:  mu     [batch_size, n_latent, 1, 1]
-                logvar [batch_size, n_latent, 1, 1]
-        output: gen    [batch_size, n_latent, 1, 1]
+        input:  mu     [batch_size, n_latent, 1]
+                logvar [batch_size, n_latent, 1]
+        output: gen    [batch_size, n_latent, 1]
         """
         if self.training:
             std = torch.exp(0.5 * logvar)
@@ -149,24 +149,24 @@ class VAE1D(nn.Module):
 
     def decode(self, gen):
         """
-        Restores an transient representation from the generated latent space vector
-        input:  gen       [batch_size, n_latent, 1, 1]
-        output: gen_trans [batch_size, n_channels, size, size]
+        Restore transient representation from the generated latent space vector
+        input:  gen       [batch_size, n_latent, 1]
+        output: gen_trans [batch_size, n_channels, size]
         """
         return self.decoder(gen)
 
     def forward(self, trans):
         """
         Generates reconstituted images from input images based on learned representation
-        input: trans     [batch_size, n_channels, size, size]
-        ouput: gen_trans [batch_size, n_channels, size, size]
+        input: trans     [batch_size, n_channels, size]
+        ouput: gen_trans [batch_size, n_channels, size]
                mu        [batch_size, n_latent]
                logvar    [batch_size, n_latent]
         """
         mu, logvar = self.encode(trans)
         gen = self.sample(mu, logvar)
-        for vecs in (mu, logvar):
-            vecs = vecs.squeeze(-1).squeeze(-1)
+        mu = mu.squeeze(-1)
+        logvar = logvar.squeeze(-1)
         return self.decode(gen), mu, logvar
 
     def demo(self, batch_size=1):
