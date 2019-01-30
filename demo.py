@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 size = 512
 n_channels = 14
 n_latent = 50
+kl_weight = 1
 
-date = '190129'
+date = '190130'
+desc = 'accumulator'
 
 def load_checkpoint(model, device):
-    checkpoint = torch.load(f'models/{date}-hydraulic/best_model-{n_latent}.pt', map_location=device)
+    path = f'models/{date}-desc}/best_model-{n_latent}-{kl_weight}.pt'
+    checkpoint = torch.load(path, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     print("Checkpoint Performance:")
@@ -44,72 +47,92 @@ def show_plot(data):
     # TODO: make into a grid of plots
 
 
-# Unchanged
-def _log_mean_exp(x, dim):
-    """
-    A numerical stable version of log(mean(exp(x)))
-    :param x: The input
-    :param dim: The dimension along which to take mean with
-    """
-    # m [dim1, 1]
-    m, _ = torch.max(x, dim=dim, keepdim=True)
-
-    # x0 [dm1, dim2]
-    x0 = x - m
-
-    # m [dim1]
-    m = m.squeeze(dim)
-
-    return m + torch.log(torch.mean(torch.exp(x0),
-                                    dim=dim))
-
-def get_iwae_score(vae, image, L=5):
-    """
-    The vae score for a single image, which is basically the loss
-    :param image: [1, 3, 256, 256]
-    :return scocre: (iwae score, iwae KL, iwae reconst).
-    """
-    # [L, 3, 256, 256]
-    image_batch = image.expand(L,
-                               image.size(1),
-                               image.size(2),
-                               image.size(3))
-
-    # [L, z_dim, 1, 1]
-    mu, logvar = vae.encode(image_batch)
-    eps = torch.randn_like(mu)
-    z = mu + eps * torch.exp(0.5 * logvar)
-    kl_weight = criterion.kl_weight
-    # [L, 3, 256, 256]
-    reconst = vae.decode(z)
-    # [L]
-    log_p_x_z = -torch.sum((reconst - image_batch).pow(2).reshape(L, -1),
-                          dim=1)
-
-    # [L]
-    log_p_z = -torch.sum(z.pow(2).reshape(L, -1), dim=1)
-
-    # [L]
-    log_q_z = -torch.sum(eps.pow(2).reshape(L, -1), dim=1)
-
-    iwae_score = -_log_mean_exp(log_p_x_z + (log_p_z - log_q_z)*kl_weight, dim=0)
-    iwae_KL_score = -_log_mean_exp(log_p_z - log_q_z, dim=0)
-    iwae_reconst_score = -_log_mean_exp(log_p_x_z, dim=0)
-
-    return iwae_score, iwae_KL_score, iwae_reconst_score
+def compute_scores(X, model, criterion):
+    assert X.shape[0] == 1, "Must compute score for one sample at a time"
+    X_hat, mu, logvar = model(X)
+    loss, loss_desc = criterion(X_hat, X, mu, logvar, reduce=False)
+    score = {'loss': loss.item(),
+             'KL': loss_desc['KL'].item(),
+             'error': -loss_desc['logp'].item()}
+    return score
 
 
-def compute_all_scores(vae, image):
-    """
-    Given an image compute all anomaly score
-    return (reconst_score, vae_score, iwae_score)
-    """
-    vae_loss, KL, reconst_err = get_vae_score(vae, image=image, L=15)
-    iwae_loss, iwae_KL, iwae_reconst = get_iwae_score(vae, image, L=15)
-    result = {'reconst_score': reconst_err.item(),
-              'KL_score': KL.item(),
-              'vae_score': vae_loss.item(),
-              'iwae_score': iwae_loss.item(),
-              'iwae_KL_score': iwae_KL.item(),
-              'iwae_reconst_score': iwae_reconst.item()}
-    return result
+def score(dl):
+    score_names = ['loss', 'KL', 'error']
+    classes = dl.dataset.classes
+    scores = {(name, cls): [] for name in score_names for cls in classes}
+    
+    model.eval()
+    with torch.no_grad():
+        for i, (X, y) in enumerate(tqdm(dl)):
+            X = X.to(device)
+            for j in range(X.shape[0]):
+                data = X[j, :].unsqueeze(0)
+                cls = classes[y[j].item()]
+                score = compute_scores(data, model, criterion)
+                for name in score_names:
+                    scores[(name, cls)].append(score[name])
+    return scores
+
+
+def auc_score(dl, scores=None):
+    if scores == None:
+        scores = score(dl)
+    score_name = 'error'
+    classes = dl.dataset.classes
+    y_true = []
+    y_score = []
+    for i, cls in enumerate(classes):
+        cls_score = scores[(score_name, cls)]
+        y_true.extend([i] * len(cls_score))
+        y_score.extend(cls_score)
+    return roc_auc_score(y_true, y_score)
+
+
+def compute_latent(dl):
+    latents = []
+    targets = []
+    
+    model.eval()
+    with torch.no_grad():
+        for i, (X, y) in enumerate(tqdm(dl)):
+            X = X.to(device)
+            for j in range(X.shape[0]):
+                data = X[j, :].unsqueeze(0)
+                X_hat, mu, logvar = model(data)
+                
+                latents.append(mu.cpu().detach().numpy())
+                targets.append(y[j].item())
+    
+    latents = np.array(latents).reshape(len(latents), -1)
+    targets = np.array(targets)
+    return latents, targets
+
+
+def compute_latent_and_loss(dl):
+    latents = []
+    kl = []
+    error = []
+    targets = []
+    
+    model.eval()
+    with torch.no_grad():
+        for i, (X, y) in enumerate(tqdm(dl)):
+            X = X.to(device)
+            for j in range(X.shape[0]):
+                data = X[j, :].unsqueeze(0)
+                X_hat, mu, logvar = model(data)
+                loss, loss_desc = criterion(X_hat, X,
+                                            mu, logvar,
+                                            reduce=False)
+                
+                latents.append(mu.cpu().detach().numpy())
+                kl.append(loss_desc['KL'].item())
+                error.append(-loss_desc['logp'].item())
+                targets.append(y[j].item())
+    
+    latents = np.array(latents).reshape(len(latents), -1)
+    kl = np.array(kl)
+    error = np.array(error)
+    targets = np.array(targets)
+    return latents, kl, error, targets
