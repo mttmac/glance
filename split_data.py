@@ -28,11 +28,11 @@ def load_data():
     return data, faults
 
         
-def prep_folders():
-    folders = [Path('train/train/norm/'),
-               Path('train/val/norm/'),
-               Path('test/norm/'),
-              Path('test/fail/')]
+def prep_folders(key):
+    folders = [Path(key + '/train/train/norm/'),
+               Path(key + '/train/val/norm/'),
+               Path(key + '/test/norm/'),
+               Path(key + '/test/fail/')]
     for folder in folders:
         if not folder.is_dir():
             os.makedirs(folder)
@@ -144,8 +144,9 @@ def save_test_train_val(data, faults, failures, key, size=512):
     mask = failures[key]
     test_idx_fail = faults[mask].index.values
     train_idx = faults[~mask].index.values
+    n_tests = min(int(0.25 * train_idx.size), len(test_idx_fail)) 
     test_idx_norm = np.random.choice(train_idx,
-                                     len(test_idx_fail),
+                                     n_tests,
                                      replace=False)
     train_idx = train_idx[~np.in1d(train_idx, test_idx_norm)]
     val_idx = np.random.choice(train_idx,
@@ -163,7 +164,7 @@ def save_test_train_val(data, faults, failures, key, size=512):
     index_ref = sorted(data.sensor.unique())  # only arrays will be saved
     log.log('Sensors:')
     log.log(index_ref)
-    folders = prep_folders()
+    folders = prep_folders(key)
     log.log('Folders')
     log.log([str(folder) for folder in folders])
     log.log('Folder sizes:')
@@ -199,8 +200,7 @@ def save_test_train_val(data, faults, failures, key, size=512):
                         end_time = ser.index[-1] + new_delta
                         ser[end_time] = vec[-1]  
                 
-                if len(ser) != size:
-                    set_trace()
+                assert len(ser) == size, "Resampling size error"
                 arr[i, :] = ser.values
             
             # Save array to folder
