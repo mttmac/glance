@@ -207,14 +207,9 @@ class VAE1DLoss(nn.Module):
         # Reconstruction loss
         batch_size = trans.shape[0]
         gen_err = (trans - gen_trans).pow(2).reshape(batch_size, -1)
-        gen_err = 0.5 * torch.sum(gen_err, dim=-1)
+        gen_err = 0.5 * torch.sum(gen_err, dim=-1)  # TODO: why the 0.5 term? not a log
         if reduce:
             gen_err = torch.mean(gen_err)
-        
-        # TODO try bce loss
-        # reduction = 'mean' if reduce else 'none'
-        # gen_err = nn.functional.binary_cross_entropy(gen_trans, trans,
-        #                                              reduction=reduction)
         
         # Regularizer
         # KL(q || p) = -log_sigma + sigma^2/2 + mu^2/2 - 1/2

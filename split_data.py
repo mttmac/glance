@@ -79,22 +79,29 @@ def show_faults(df):
 
 def define_failures(df):
     masks = {}
-
+    
     # Cooler failure
     mask = df.iloc[:, 0] == 3
     masks['cooler'] = mask
+    any_mask = mask
     
     # Valve failure
     mask = df.iloc[:, 1] == 73
     masks['valve'] = mask
+    any_mask = any_mask | mask
     
     # Pump failure
     mask = df.iloc[:, 2] == 2
     masks['pump'] = mask
+    any_mask = any_mask | mask
     
-    # Pump failure
+    # Accumulator failure
     mask = df.iloc[:, 3] == 90
     masks['accumulator'] = mask
+    any_mask = any_mask | mask
+    
+    # Any fault
+    masks['any'] = any_mask
     
     # Normal (optimal or sub-optimal) otherwise
     # Stability is ignored b/c monitoring must work for   

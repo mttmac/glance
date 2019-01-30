@@ -7,7 +7,7 @@ n_latent = 50
 kl_weight = 1
 
 date = '190130'
-desc = 'accumulator'
+desc = 'cooler'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -89,6 +89,7 @@ def auc_score(dl, scores):
         cls_score = scores[(score_name, cls)]
         y_true.extend([i] * len(cls_score))
         y_score.extend(cls_score)
+    y_true = (np.array(y_true) == 0).astype(np.bool)  # True when fault
     return roc_auc_score(y_true, y_score)
 
 
