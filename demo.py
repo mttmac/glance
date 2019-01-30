@@ -7,7 +7,7 @@ n_latent = 50
 kl_weight = 1
 
 date = '190130'
-desc = 'cooler'
+desc = 'pump'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
