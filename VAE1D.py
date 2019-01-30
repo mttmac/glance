@@ -281,7 +281,7 @@ def load_datasets(data_path, batch_size=32):
     val_path = data_path / 'train/val/'
     test_path = data_path / 'test/'
     
-    normals = np.load(data_path / 'normals.npy')
+    normals = np.load(data_path.parent / 'normals.npy')
 
     train_ds = TransientDataset(train_path, normals)
     val_ds = TransientDataset(val_path, normals)

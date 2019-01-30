@@ -9,8 +9,10 @@ kl_weight = 1
 date = '190130'
 desc = 'accumulator'
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def load_checkpoint(model, device):
-    path = f'models/{date}-desc}/best_model-{n_latent}-{kl_weight}.pt'
+    path = f'models/{date}-{desc}/best_model-{n_latent}-{kl_weight}.pt'
     checkpoint = torch.load(path, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
@@ -21,7 +23,9 @@ def load_checkpoint(model, device):
     return model
 
 
-def get_random_samples(dl, n=20):
+def get_random_samples(dl, n=None):
+    if n is None:
+        n = len(dl)
     for i, (X, y) in enumerate(dl):
         if i == 0:
             data = X
@@ -38,6 +42,7 @@ def list_target_classes(dl):
     classes = dl.dataset.classes
     for i, clss in enumerate(classes):
         print(f"{i} = {clss}")
+    return classes
     
     
 def show_plot(data):
@@ -57,7 +62,7 @@ def compute_scores(X, model, criterion):
     return score
 
 
-def score(dl):
+def score(dl, model, criterion):
     score_names = ['loss', 'KL', 'error']
     classes = dl.dataset.classes
     scores = {(name, cls): [] for name in score_names for cls in classes}
@@ -75,9 +80,7 @@ def score(dl):
     return scores
 
 
-def auc_score(dl, scores=None):
-    if scores == None:
-        scores = score(dl)
+def auc_score(dl, scores):
     score_name = 'error'
     classes = dl.dataset.classes
     y_true = []
@@ -89,7 +92,7 @@ def auc_score(dl, scores=None):
     return roc_auc_score(y_true, y_score)
 
 
-def compute_latent(dl):
+def compute_latent(dl, model):
     latents = []
     targets = []
     
@@ -109,7 +112,7 @@ def compute_latent(dl):
     return latents, targets
 
 
-def compute_latent_and_loss(dl):
+def compute_latent_and_loss(dl, model, criterion):
     latents = []
     kl = []
     error = []
