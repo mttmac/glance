@@ -1,5 +1,8 @@
 from VAE1D import *
-import matplotlib.pyplot as plt
+
+from sklearn.metrics import roc_auc_score, f1_score
+from itertools import product
+import scipy.stats as stats
 
 size = 512
 n_channels = 14
@@ -7,7 +10,7 @@ n_latent = 50
 kl_weight = 1
 
 date = '190130'
-desc = 'any'
+desc = 'accumulator'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

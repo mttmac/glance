@@ -8,9 +8,8 @@ Written by Matt MacDonald 2019
 
 
 # IMPORTS
-import os, math, time
+import os, time
 from pathlib import Path
-from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -19,10 +18,6 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-
-from sklearn.metrics import roc_auc_score, f1_score
-from itertools import product
-import scipy.stats as stats
 
 
 depth = 16      # initial depth to convolve channels into
@@ -41,7 +36,7 @@ class VAE1D(nn.Module):
         self.n_channels = n_channels
         self.n_latent = n_latent
         
-        n = math.log2(self.size)
+        n = np.log2(self.size)
         assert n == round(n), 'Vector size must be a power of 2'  # restrict input sizes permitted
         assert n >= 3, 'Vector size must be at least 8'           # low dimensional data won't work well
         n = int(n)
