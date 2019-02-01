@@ -1,6 +1,4 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+# Byte-compiled / optimized / DLL files __pycache__/ *.py[cod] 
 *$py.class
 
 # C extensions
@@ -104,9 +102,10 @@ venv.bak/
 .mypy_cache/
 
 # Folders
-/models/
-/playground/
-/data/
+models/*
+!models/190130-accumulator/
+playground/
+data/
 
 
 
