@@ -93,7 +93,7 @@ def define_failures(df):
     # Pump failure
     mask = df.iloc[:, 2] == 2
     masks['pump'] = mask
-    any_mask = any_mask | mask
+    any_mask = any_mask | masks
     
     # Accumulator failure
     mask = df.iloc[:, 3] == 90
