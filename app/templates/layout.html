@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bar charts with Bokeh!</title>
+        <link href='http://cdn.pydata.org/bokeh/release/bokeh-{{ bkversion }}.min.css' rel='stylesheet' type="text/css">
+        <link href='http://cdn.pydata.org/bokeh/release/bokeh-widgets-{{ bkversion }}.min.css' rel='stylesheet' type="text/css">
+        <link href="http://cdn.pydata.org/bokeh/release/bokeh-tables-{{ bkversion }}.min.css" rel="stylesheet" type="text/css">
+        <script src='http://cdn.pydata.org/bokeh/release/bokeh-{{ bkversion }}.min.js'></script>
+        <script src='http://cdn.pydata.org/bokeh/release/bokeh-widgets-{{ bkversion }}.min.js'></script>
+        <script src='http://cdn.pydata.org/bokeh/release/bokeh-tables-{{ bkversion }}.min.js'></script>
+    </head>
+    <body>
+        <h1>Monitoring Installation: {{ install_id }}</h1>
+        <p>Reading sensors: EPS1, FS1, FS2, PS1, PS2, PS3, PS4, PS5, PS6, TS1, TS2, TS3, TS4, VS1</p>
+        <p>Commissioned: 2019-01-30 (17 hrs 30 min)</p>
+        {% block body %}{% endblock %}
+    </body>
+</html>
