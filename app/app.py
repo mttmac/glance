@@ -1,4 +1,6 @@
-import random, sys
+import random
+import sys
+print(sys.version_info)
 sys.path.append('../src')
 from model import *
 
@@ -13,10 +15,10 @@ from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
-@before_first_request()
-def prep_data():
-    model = load_checkpoint()
-    clusters = load_clusters()
+# @before_first_request()
+# def prep_data():
+#     model = load_checkpoint()
+#     clusters = load_clusters()
 
 @app.route('/')
 def index():

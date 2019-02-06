@@ -61,11 +61,11 @@ class VAE1D(nn.Module):
             # i_depth = o_depth of previous layer
             i_depth = depth * 2 ** i
             o_depth = depth * 2 ** (i + 1)
-            self.encoder.add_module(f'pyramid_{i_depth}-{o_depth}_conv',
+            self.encoder.add_module('pyramid_{}-{}_conv'.format(i_depth, o_depth),
                                     nn.Conv1d(i_depth, o_depth, filt_size, stride, pad, bias=True))
-            self.encoder.add_module(f'pyramid_{o_depth}_batchnorm',
+            self.encoder.add_module('pyramid_{}_batchnorm'.format(o_depth),
                                     nn.BatchNorm1d(o_depth))
-            self.encoder.add_module(f'pyramid_{o_depth}_relu',
+            self.encoder.add_module('pyramid_{}_relu'.format(o_depth),
                                     nn.ReLU(inplace=True))
         
         # Latent representation
@@ -90,11 +90,11 @@ class VAE1D(nn.Module):
         for i in range(n - 3, 0, -1):
             i_depth = depth * 2 ** i
             o_depth = depth * 2 ** (i - 1)
-            self.decoder.add_module(f'pyramid_{i_depth}-{o_depth}_conv',
+            self.decoder.add_module('pyramid_{}-{}_conv'.format(i_depth, o_depth),
                                     nn.ConvTranspose1d(i_depth, o_depth, filt_size, stride, pad, bias=True))
-            self.decoder.add_module(f'pyramid_{o_depth}_batchnorm',
+            self.decoder.add_module('pyramid_{}_batchnorm'.format(o_depth),
                                     nn.BatchNorm1d(o_depth))
-            self.decoder.add_module(f'pyramid_{o_depth}_relu', nn.ReLU(inplace=True))
+            self.decoder.add_module('pyramid_{}_relu'.format(o_depth), nn.ReLU(inplace=True))
         
         # Final transposed convolution to return to vector size
         # TODO: ?No final activation to allow unbounded numerical output
@@ -169,13 +169,13 @@ class VAE1D(nn.Module):
                        self.n_channels,
                        self.size,
                        device=self.device)
-        print(f'Input size: {X.shape}')
+        print('Input size:', X.shape)
         E = self.encoder(X)
-        print(f'Encoded size: {E.shape}')
+        print('Encoded size:', E.shape)
         L = self.sample(*self.encode(X))
-        print(f'Latent size: {L.shape}')
+        print('Latent size:', L.shape)
         D = self.decoder(L)
-        print(f'Decoded (output) size: {D.shape}')
+        print('Decoded (output) size:', D.shape)
         return X, E, L, D
     
     def to(self, device):
