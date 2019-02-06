@@ -101,6 +101,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Compiled
+*.pyc
+
 # Folders
 models/*
 !models/190130-accumulator/
