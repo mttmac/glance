@@ -18,27 +18,25 @@ def load_checkpoint():
     model = VAE1D(size, n_channels, n_latent)
     model = model.to(device)
     
-    path_params = (date, desc, n_latent, kl_weight)
-    path = "../models/{}-{}/best_model-{}-{}.pt".format(*path_params)
+    path = f'../models/{date}-{desc}/best_model-{n_latent}-{kl_weight}.pt'
     checkpoint = torch.load(path, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
 
     print("Checkpoint Performance:")
-    print("Validation loss: {:.3f}".format(checkpoint['val_loss']))
-    print("Epoch: {}".format(checkpoint['epoch']))
+    print(f"Validation loss: {checkpoint['val_loss']:.3f}")
+    print(f"Epoch: {checkpoint['epoch']}")
     return model
 
 
 def load_clusters():
-    params = (date, desc)
-    means = np.load('../models/{}-{}/cluster_means.npy'.format(*params))
-    covars = np.load('../models/{}-{}/cluster_covars.npy'.format(*params))
-    threshold = np.load('../models/{}-{}/threshold.npy'.format(*params))
+    means = np.load(f'../models/{date}-{desc}/cluster_means.npy')
+    covars = np.load(f'../models/{date}-{desc}/cluster_covars.npy')
+    threshold = np.load(f'../models/{date}-{desc}/threshold.npy')
     return means, covars, threshold
 
 
 def get_random_samples(n=None):
-    dl = load_datasets(Path('../data/hydraulic/{}'.format(desc)))[2]
+    dl = load_datasets(Path(f'../data/hydraulic/{desc}'))[2]
     if n is None:
         n = len(dl)
     for i, (X, y) in enumerate(dl):
@@ -80,59 +78,59 @@ def detect_anomaly(log_prob, threshold):
         
 
 # Update for flask app
-# def plot_cycle(X, cycle=0, generated=False, fig=None):
-#     if fig is None:
-#         fig = plt.figure()
-#     else:
-#         fig.clf()
-#         plt.figure(fig.number)
-#     for i in range(X.shape[0]):
-#         plt.plot(X[i, :])
-#     if not generated:
-#         plt.title(f'Input sensor data for cycle {cycle + 1}')
-#     else:
-#         plt.title(f'Generated sensor data for cycle {cycle + 1}')
-#     fig.canvas.draw()
-#     return fig
+def plot_cycle(X, cycle=0, generated=False, fig=None):
+    if fig is None:
+        fig = plt.figure()
+    else:
+        fig.clf()
+        plt.figure(fig.number)
+    for i in range(X.shape[0]):
+        plt.plot(X[i, :])
+    if not generated:
+        plt.title(f'Input sensor data for cycle {cycle + 1}')
+    else:
+        plt.title(f'Generated sensor data for cycle {cycle + 1}')
+    fig.canvas.draw()
+    return fig
         
 
-# def plot_anomalies(status, cycle, fig=None):
-#     if fig is None:
-#         fig = plt.figure()
-#     else:
-#         fig.clf()
-#         plt.figure(fig.number)
-#     plt.bar(range(1, len(status) + 1), status)
-#     limit = 6
-#     count = cycle + 1
-#     anoms = status.sum()
-#     cycle = 'cycle' if count == 1 else 'cycles'
-#     anomaly = 'anomaly' if anoms == 1 else 'anomalies'
-#     title = f"{count} {cycle}, {int(anoms)} {anomaly}"
-#     if count > limit and anoms > limit / 2:
-#         title = title + ': MAINTENANCE REQUIRED'
-#     plt.title(title)
-#     plt.ylim([0, 1])
-#     plt.xticks(range(1, count + 1))
-#     plt.ylabel('Anomaly')
-#     plt.xlabel('Cycle')
-#     fig.canvas.draw()
-#     return fig
+def plot_anomalies(status, cycle, fig=None):
+    if fig is None:
+        fig = plt.figure()
+    else:
+        fig.clf()
+        plt.figure(fig.number)
+    plt.bar(range(1, len(status) + 1), status)
+    limit = 6
+    count = cycle + 1
+    anoms = status.sum()
+    cycle = 'cycle' if count == 1 else 'cycles'
+    anomaly = 'anomaly' if anoms == 1 else 'anomalies'
+    title = f"{count} {cycle}, {int(anoms)} {anomaly}"
+    if count > limit and anoms > limit / 2:
+        title = title + ': MAINTENANCE REQUIRED'
+    plt.title(title)
+    plt.ylim([0, 1])
+    plt.xticks(range(1, count + 1))
+    plt.ylabel('Anomaly')
+    plt.xlabel('Cycle')
+    fig.canvas.draw()
+    return fig
     
     
-# def stream(model, means, covars, threshold):
-#     threshold = 0
-#     X_fig, X_hat_fig, stat_fig = None, None, None
-#     n = 20
-#     status = np.zeros(n)
-#     data, targets = get_random_samples(n)
-#     for i in range(n):
-#         X = data[i, :, :]
-#         latent, X, X_hat = compute_latent(X, model)
-#         log_prob = compute_log_prob(latent, means, covars)
-#         status[i] = detect_anomaly(log_prob, threshold)
-#         X_fig = plot_cycle(X, cycle=i, fig=X_fig)
-#         X_hat_fig = plot_cycle(X_hat, cycle=i, generated=True, fig=X_hat_fig)
-#         stat_fig = plot_anomalies(status, cycle=i, fig=stat_fig)
-#         sleep(2)
+def stream(model, means, covars, threshold):
+    threshold = 0
+    X_fig, X_hat_fig, stat_fig = None, None, None
+    n = 20
+    status = np.zeros(n)
+    data, targets = get_random_samples(n)
+    for i in range(n):
+        X = data[i, :, :]
+        latent, X, X_hat = compute_latent(X, model)
+        log_prob = compute_log_prob(latent, means, covars)
+        status[i] = detect_anomaly(log_prob, threshold)
+        X_fig = plot_cycle(X, cycle=i, fig=X_fig)
+        X_hat_fig = plot_cycle(X_hat, cycle=i, generated=True, fig=X_hat_fig)
+        stat_fig = plot_anomalies(status, cycle=i, fig=stat_fig)
+        sleep(2)
     
