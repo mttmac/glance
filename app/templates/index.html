@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>GLANCE - Monitoring Dashboard</title>
+        <title>GLANCE - General Anomaly Classification Engine</title>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,19 +17,18 @@
         <script src='http://cdn.pydata.org/bokeh/release/bokeh-widgets-{{ bkversion }}.min.js'></script>
         <script src='http://cdn.pydata.org/bokeh/release/bokeh-tables-{{ bkversion }}.min.js'></script>
     </head>
-    
     <body>
         <!-- Fixed navbar -->
         <nav class="navbar navbar-inverse navbar-fixed-top">
           <div class="container">
             <div class="navbar-header">
-              <a class="navbar-brand" href='http://glance.mattmacdonald.me'>
-                  Home
+              <a class="navbar-brand" href='http://mattmacdonald.me'>
+                  Matt MacDonald
               </a>
             </div>
           </div>
         </nav>
-
+        
         <!-- Installation links -->
         <div class="container theme-showcase" role="main">
           <div class="jumbotron">
@@ -37,33 +36,13 @@
             <p>Better inspections at a glance</p>
           </div>
           <div class="page-header">
-            <h3>Monitoring Dashboard</h3>
+            <h3>Select installation to monitor:</h3>
           </div>
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">{{ install_id|safe }}</h3>
-            </div>
-            <div class="panel-body">
-              <p>
-                Reading from sensors: EPS1, FS1, FS2, PS1, PS2, PS3, PS4, PS5, PS6, TS1, TS2, TS3, TS4, VS1<br>
-                Commissioned on 2019-01-30 (17 hr 30 min collected)<br>
-              </p>
-            </div>
-          </div>
-        
-          <div class="well">
-            <h3>Normal operation</h3>
-            {% block n_body %}{% endblock %}
-          </div>
-          <div class="well">
-            <h3>Faulty operation</h3>
-            <div class="alert alert-danger" role="alert">
-              <strong>Danger!</strong>
-              High anomaly rate detected.
-              Maintenance required for installation {{ install_id|safe }}.<br>
-            </div>
-            {% block f_body %}{% endblock %}
-          </div>
+          <form action='http://glance.mattmacdonald.me/{{ sample_id }}/'>
+            <button type='submit' class="btn btn-lg btn-primary">
+              {{ sample_id | safe }}
+            </button>
+          </form>
         </div>
     </body>
 </html>

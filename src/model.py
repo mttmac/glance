@@ -32,11 +32,13 @@ def load_clusters():
     means = np.load(f'../models/{date}-{desc}/cluster_means.npy')
     covars = np.load(f'../models/{date}-{desc}/cluster_covars.npy')
     threshold = np.load(f'../models/{date}-{desc}/threshold.npy')
+    
+    print(f"Initial Threshold: {threshold:.3f}")
     return means, covars, threshold
 
 
 def get_random_samples(n=None):
-    dl = load_datasets(Path(f'../data/hydraulic/{desc}'))[2]
+    dl = load_datasets(Path(f'../data/hydraulic/{desc}'))[2]  # test set only
     if n is None:
         n = len(dl)
     for i, (X, y) in enumerate(dl):
@@ -49,6 +51,13 @@ def get_random_samples(n=None):
         else:
             break
     return data, targets
+
+
+def divide_samples(data, targets):
+    norm_flag = 1
+    normal = data[targets == norm_flag, :, :]
+    faults = data[targets != norm_flag, :, :]
+    return normal, faults
 
 
 def compute_latent(X, model):    
@@ -92,45 +101,4 @@ def plot_cycle(X, cycle=0, generated=False, fig=None):
         plt.title(f'Generated sensor data for cycle {cycle + 1}')
     fig.canvas.draw()
     return fig
-        
-
-def plot_anomalies(status, cycle, fig=None):
-    if fig is None:
-        fig = plt.figure()
-    else:
-        fig.clf()
-        plt.figure(fig.number)
-    plt.bar(range(1, len(status) + 1), status)
-    limit = 6
-    count = cycle + 1
-    anoms = status.sum()
-    cycle = 'cycle' if count == 1 else 'cycles'
-    anomaly = 'anomaly' if anoms == 1 else 'anomalies'
-    title = f"{count} {cycle}, {int(anoms)} {anomaly}"
-    if count > limit and anoms > limit / 2:
-        title = title + ': MAINTENANCE REQUIRED'
-    plt.title(title)
-    plt.ylim([0, 1])
-    plt.xticks(range(1, count + 1))
-    plt.ylabel('Anomaly')
-    plt.xlabel('Cycle')
-    fig.canvas.draw()
-    return fig
-    
-    
-def stream(model, means, covars, threshold):
-    threshold = 0
-    X_fig, X_hat_fig, stat_fig = None, None, None
-    n = 20
-    status = np.zeros(n)
-    data, targets = get_random_samples(n)
-    for i in range(n):
-        X = data[i, :, :]
-        latent, X, X_hat = compute_latent(X, model)
-        log_prob = compute_log_prob(latent, means, covars)
-        status[i] = detect_anomaly(log_prob, threshold)
-        X_fig = plot_cycle(X, cycle=i, fig=X_fig)
-        X_hat_fig = plot_cycle(X_hat, cycle=i, generated=True, fig=X_hat_fig)
-        stat_fig = plot_anomalies(status, cycle=i, fig=stat_fig)
-        sleep(2)
-    
+     
