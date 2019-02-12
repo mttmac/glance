@@ -103,12 +103,17 @@ venv.bak/
 
 # Compiled
 *.pyc
+*/__pycache__*/
 
 # Folders
 models/*
 !models/190130-accumulator/
 playground/
-data/
+data/*
+!data/raw/
+data/raw/*
+!data/raw/documentation.txt
+!data/raw/description.txt
 app/playground/
 
 
