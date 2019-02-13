@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-
 '''
 Define variational autoencoder for 1D input data (time-series) including loss, training
 and data loading functions to work with intended dataset.
-Written by Matt MacDonald 2019
 '''
 
 
-# IMPORTS
 import os, time
 from pathlib import Path
 

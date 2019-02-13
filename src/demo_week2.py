@@ -38,7 +38,7 @@ def show_images(imgs):
     plt.imshow(grid.permute(1, 2, 0))
 
 
-# Unchanged
+# Unchanged fns below from paper
 def _log_mean_exp(x, dim):
     """
     A numerical stable version of log(mean(exp(x)))

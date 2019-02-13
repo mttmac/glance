@@ -1,3 +1,8 @@
+'''
+Define functions to analyze latent space clusters.
+'''
+
+
 from VAE1D import *
 
 import matplotlib.pyplot as plt
@@ -119,7 +124,6 @@ def compute_latent_and_loss(dl, model, criterion):
     return latents, kl, error, targets
 
 
-# from pdb import set_trace
 def draw_ellipse(position, covariance, pca, **kwargs):
     """Draw an ellipse with a given position and covariance"""
     ax = plt.gca()
@@ -139,7 +143,8 @@ def draw_ellipse(position, covariance, pca, **kwargs):
                              nsig * height,
                              angle,
                              **kwargs))
-        
+
+
 def plot_clusters(latents, gmm, show_pdf=True, ax=None):
     # Project to 2D for plotting
     if ax is None:

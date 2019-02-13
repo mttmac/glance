@@ -1,3 +1,7 @@
+'''
+Define functions to apply a pre-trained VAE model to sensor data.
+'''
+
 from VAE1D import *
 from scipy.stats import multivariate_normal
 
@@ -13,6 +17,7 @@ date = '190130'
 desc = 'accumulator'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 def load_checkpoint():
     model = VAE1D(size, n_channels, n_latent)
@@ -86,7 +91,7 @@ def detect_anomaly(log_prob, threshold):
     return int(log_prob < threshold)
         
 
-# Update for flask app
+# For future addition to flask app
 def plot_cycle(X, cycle=0, generated=False, fig=None):
     if fig is None:
         fig = plt.figure()

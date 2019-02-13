@@ -1,3 +1,9 @@
+'''
+Define variational autoencoder for 2D images, recreated from paper as proof of concept.
+Ref: https://arxiv.org/abs/1807.01349
+'''
+
+
 import os, math, time
 from pathlib import Path
 from datetime import date

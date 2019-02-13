@@ -15,6 +15,7 @@ desc = 'accumulator'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
 def load_checkpoint():
     model = VAE1D(size, n_channels, n_latent)
     model = model.to(device)

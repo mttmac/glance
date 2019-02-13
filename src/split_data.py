@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-
 '''
-Split raw data into test and train folders, saved as numpy arrays
-Written by Matt MacDonald 2019
+Define functions to split raw data into test and train folders, saved as numpy arrays.
 '''
 
 import pandas as pd
