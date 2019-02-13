@@ -6,6 +6,8 @@ In repetitive manufacturing there are a lot of machines and equipment that runs 
 
 Research has shown that variational autoencoders (VAE), a type of neural network, can work for detecting skin cancer anomalies from 2D images. I have adapted this idea to work on 1D time-series sensor data. The idea is to learn a lower dimensional probabilistic representation for "normal" operation using the VAE and use the output error to detect outliers (anomalies). This works but it is not sufficient for high accuracy. As a final step the representation space is clustered and a likelihood is calculated for each new sample (using GMMs). New cycles are streamed to the detector and anomalies are flagged below a threshold. If the anomaly rate grows too high it is then relatively straightforward to flag the equipment for maintenance. This complete pipeline achieves over 80% accuracy on the test dataset.
 
+Presentation: https://drive.google.com/open?id=1VcmUn7fFjAxLc-uou24fMm9l6N_TprG-mIIhKq3u8dk
+
 # How to Use
 The functionality of the trained model can be demonstrated live with the included flask app. Depending on current hosting this may be accessible at glance.mattmacdonald.me. 
 The notebooks demonstrate the training and assessment of the model, particularly:
