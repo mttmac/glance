@@ -53,15 +53,56 @@ def get_random_samples(n=None):
     return data, targets
 
 
-def compute_latent(X, model):    
+def list_target_classes(dl):
+    classes = dl.dataset.classes
+    for i, clss in enumerate(classes):
+        print(f"{i} = {clss}")
+
+        
+def compute_scores(dl, model, criterion):
+    '''
+    Return a dictionary of the total loss and the KL, reconstruciton error terms
+    for each sample in the dataloader
+    '''
+    score_names = ['loss', 'KL', 'error']
+    classes = dl.dataset.classes
+    scores = {(name, cls): [] for name in score_names for cls in classes}
+    
     model.eval()
     with torch.no_grad():
-        X = X.unsqueeze(0).to(device)
-        X_hat, mu, logvar = model(X)
-        mu = mu.cpu().detach().numpy()
-        X = X[0, :, :].cpu().detach().numpy()
-        X_hat = X_hat[0, :, :].cpu().detach().numpy()
-    return mu, X, X_hat
+        for i, (X, y) in enumerate(tqdm(dl)):
+            X = X.to(device)
+            for j in range(X.shape[0]):
+                data = X[j, :].unsqueeze(0)
+                clss = classes[y[j].item()]
+                gen_data, mu, logvar = model(data)
+                loss, loss_desc = criterion(gen_data, data, mu, logvar, reduce=False)
+                score = {'loss': loss.item(),
+                         'KL': loss_desc['KL'].item(),
+                         'error': -loss_desc['logp'].item()}
+                for name in score_names:
+                    scores[(name, clss)].append(score[name])
+    return scores
+
+
+def compute_latents(dl, model, max_n=100):   
+    '''
+    Calculate and return the latent vectors
+    '''
+    latents = []
+    targets = []
+    model.eval()
+    with torch.no_grad():
+        for i, (X, y) in enumerate(tqdm(dl)):
+            X = X.to(device)
+            for j in range(X.shape[0]):
+                data = X[j, :].unsqueeze(0)
+                _, mu, _ = model(data)
+                latents.append(mu.cpu().detach().numpy().ravel())
+                targets.append(y[j])
+            if i >= max_n:
+                break
+    return np.array(latents), np.array(targets)
 
 
 def compute_log_prob(latent, means, covars):
