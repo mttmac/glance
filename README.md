@@ -8,8 +8,8 @@ Research has shown that variational autoencoders (VAE), a type of neural network
 
 Presentation: https://goo.gl/NmjqYh
 
-# How to Use
-The functionality of the trained model can be demonstrated live with the included flask app. Depending on current hosting this may be accessible at glance.mattmacdonald.me. 
+## How to Use
+The functionality of the trained model can be demonstrated live with the included flask app. Depending on current hosting this may be accessible at [glance.mattmacdonald.me](http://glance.mattmacdonald.me).
 The notebooks demonstrate the training and assessment of the model, particularly:
 * VAE_training_hydraulic_faults.ipynb
 * VAE_error_classification.ipynb
